@@ -64,6 +64,7 @@ export default function CompanyForm({ onSubmit, loading, prefillData, error }) {
     analysis_type: 'product',
     information_availability: 'full',
     target_company_name: '',
+    target_product_name: '',
     industry: 'fintech',
     business_type: 'software_product',
     business_description: '',
@@ -86,6 +87,7 @@ export default function CompanyForm({ onSubmit, loading, prefillData, error }) {
         analysis_type: prefillData.analysis_type || 'product',
         information_availability: prefillData.information_availability || 'full',
         target_company_name: prefillData.company_name || '',
+        target_product_name: prefillData.target_product_name || '',
         industry: prefillData.industry || 'fintech',
         business_type: prefillData.business_type || 'software_product',
         business_description: prefillData.business_description || '',
@@ -209,6 +211,22 @@ export default function CompanyForm({ onSubmit, loading, prefillData, error }) {
           onChange={(e) => updateField('target_company_name', e.target.value)}
           placeholder="e.g., PayEasy Technologies" />
       </div>
+
+      {/* ── Product / Service Name (conditional) ─────── */}
+      {(form.analysis_type === 'product' || form.analysis_type === 'service') && (
+        <div className="form-group">
+          <label className="form-label" htmlFor="product-name">
+            {form.analysis_type === 'product' ? 'Product Name' : 'Service Name'}
+          </label>
+          <input id="product-name" type="text" className="form-input"
+            value={form.target_product_name}
+            onChange={(e) => updateField('target_product_name', e.target.value)}
+            placeholder={form.analysis_type === 'product'
+              ? 'e.g., PayEasy Payment Gateway'
+              : 'e.g., Compliance Audit Service'}
+          />
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)' }}>
         <div className="form-group">
