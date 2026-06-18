@@ -1,22 +1,15 @@
 /**
  * CompanyForm — Multi-field company profile form.
  *
- * This form collects all inputs for the CompanyProfileRequest schema.
- * Supports two modes:
- *   1. New analysis — empty form
- *   2. Re-analysis — pre-populated from previous analysis
- *
- * Fields are grouped logically:
- *   - Analysis Configuration (mode, type, info availability)
- *   - Company Identity (name, industry, business type)
- *   - Business Details (description, data types, regions)
- *   - Sector Triggers (payments, health data)
- *   - Existing Compliance (free text list)
+ * Collects all inputs for the CompanyProfileRequest schema.
+ * Supports "Other" free-text for data types and regions.
+ * Removed "Processes Payments" / "Stores Health Data" toggles —
+ * these are now inferred from data_types selections.
  */
 
 import { useState, useEffect } from 'react';
 
-// ── Option definitions matching the backend Literal types ───
+// ── Option definitions ──────────────────────────────────────
 const INDUSTRIES = [
   { value: 'fintech', label: 'Fintech' },
   { value: 'healthtech', label: 'Healthtech' },
@@ -44,18 +37,28 @@ const DATA_TYPES = [
   { value: 'health', label: 'Health' },
   { value: 'biometric', label: 'Biometric' },
   { value: 'children_data', label: "Children's Data" },
+  { value: 'behavioral', label: 'Behavioral / Analytics' },
+  { value: 'location', label: 'Location / GPS' },
+  { value: 'communications', label: 'Communications' },
+  { value: 'employment', label: 'Employment / HR' },
   { value: 'none', label: 'None' },
+  { value: 'other', label: 'Other' },
 ];
 
 const REGIONS = [
   { value: 'india', label: '🇮🇳 India' },
   { value: 'eu', label: '🇪🇺 EU' },
   { value: 'us', label: '🇺🇸 US' },
+  { value: 'uk', label: '🇬🇧 UK' },
+  { value: 'singapore', label: '🇸🇬 Singapore' },
+  { value: 'uae', label: '🇦🇪 UAE' },
+  { value: 'japan', label: '🇯🇵 Japan' },
+  { value: 'australia', label: '🇦🇺 Australia' },
   { value: 'global', label: '🌍 Global' },
+  { value: 'other', label: 'Other' },
 ];
 
-export default function CompanyForm({ onSubmit, loading, prefillData }) {
-  // ── Form State ──────────────────────────────────────────
+export default function CompanyForm({ onSubmit, loading, prefillData, error }) {
   const [form, setForm] = useState({
     analysis_mode: 'self',
     analysis_type: 'product',
@@ -72,8 +75,10 @@ export default function CompanyForm({ onSubmit, loading, prefillData }) {
   });
 
   const [complianceInput, setComplianceInput] = useState('');
+  const [customDataType, setCustomDataType] = useState('');
+  const [customRegion, setCustomRegion] = useState('');
 
-  // ── Pre-fill for re-analysis ────────────────────────────
+  // Pre-fill for re-analysis
   useEffect(() => {
     if (prefillData) {
       setForm({
@@ -93,7 +98,6 @@ export default function CompanyForm({ onSubmit, loading, prefillData }) {
     }
   }, [prefillData]);
 
-  // ── Handlers ────────────────────────────────────────────
   const updateField = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }));
   };
@@ -107,6 +111,14 @@ export default function CompanyForm({ onSubmit, loading, prefillData }) {
         return { ...prev, [field]: [...arr, value] };
       }
     });
+  };
+
+  const addCustomItem = (field, value, setter) => {
+    const trimmed = value.trim();
+    if (trimmed && !form[field].includes(trimmed)) {
+      updateField(field, [...form[field], trimmed]);
+      setter('');
+    }
   };
 
   const addCompliance = () => {
@@ -123,14 +135,35 @@ export default function CompanyForm({ onSubmit, loading, prefillData }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(form);
+    // Auto-infer payment/health flags from data_types
+    const submissionData = {
+      ...form,
+      processes_payments: form.data_types.includes('financial'),
+      stores_health_data: form.data_types.includes('health'),
+    };
+    onSubmit(submissionData);
   };
 
   return (
     <form onSubmit={handleSubmit} className="animate-fade-in">
-      {/* ── Analysis Configuration ───────────────────────── */}
+      {/* ── Error Display ─────────────────────────────── */}
+      {error && (
+        <div style={{
+          padding: '12px 16px',
+          background: 'rgba(255, 71, 87, 0.1)',
+          border: '1px solid rgba(255, 71, 87, 0.3)',
+          borderRadius: 'var(--radius-md)',
+          color: 'var(--risk-critical)',
+          fontSize: '0.85rem',
+          marginBottom: 'var(--space-lg)',
+        }}>
+          ⚠️ {error}
+        </div>
+      )}
+
+      {/* ── Analysis Configuration ───────────────────── */}
       <h3 style={{ marginBottom: 'var(--space-md)', color: 'var(--primary-400)' }}>
-        ⚙️ Analysis Configuration
+        Analysis Configuration
       </h3>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--space-md)' }}>
@@ -164,9 +197,9 @@ export default function CompanyForm({ onSubmit, loading, prefillData }) {
         </div>
       </div>
 
-      {/* ── Company Identity ─────────────────────────────── */}
+      {/* ── Company Identity ─────────────────────────── */}
       <h3 style={{ marginBottom: 'var(--space-md)', marginTop: 'var(--space-lg)', color: 'var(--primary-400)' }}>
-        🏢 Company Identity
+        Company Identity
       </h3>
 
       <div className="form-group">
@@ -195,7 +228,7 @@ export default function CompanyForm({ onSubmit, loading, prefillData }) {
         </div>
       </div>
 
-      {/* ── Business Description ─────────────────────────── */}
+      {/* ── Business Description ─────────────────────── */}
       <div className="form-group">
         <label className="form-label" htmlFor="business-desc">Business Description</label>
         <textarea id="business-desc" className="form-textarea"
@@ -205,9 +238,9 @@ export default function CompanyForm({ onSubmit, loading, prefillData }) {
           rows={5} />
       </div>
 
-      {/* ── Data Types ───────────────────────────────────── */}
+      {/* ── Data Types ───────────────────────────────── */}
       <h3 style={{ marginBottom: 'var(--space-md)', marginTop: 'var(--space-lg)', color: 'var(--primary-400)' }}>
-        📊 Data & Regions
+        Data & Regions
       </h3>
 
       <div className="form-group">
@@ -217,11 +250,34 @@ export default function CompanyForm({ onSubmit, loading, prefillData }) {
             <label key={dt.value}
               className={`form-checkbox-label ${form.data_types.includes(dt.value) ? 'checked' : ''}`}>
               <input type="checkbox" checked={form.data_types.includes(dt.value)}
-                onChange={() => toggleArrayItem('data_types', dt.value)} />
+                onChange={() => {
+                  if (dt.value === 'other') return; // handled by text input below
+                  toggleArrayItem('data_types', dt.value);
+                }} />
               {dt.label}
             </label>
           ))}
         </div>
+        {/* Custom data type input */}
+        <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-sm)' }}>
+          <input type="text" className="form-input" value={customDataType}
+            onChange={(e) => setCustomDataType(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomItem('data_types', customDataType, setCustomDataType))}
+            placeholder="Add custom data type..." style={{ flex: 1, fontSize: '0.85rem' }} />
+          <button type="button" className="btn btn-secondary btn-sm"
+            onClick={() => addCustomItem('data_types', customDataType, setCustomDataType)}>Add</button>
+        </div>
+        {/* Show custom (non-predefined) data types as removable tags */}
+        {form.data_types.filter(dt => !DATA_TYPES.some(d => d.value === dt)).length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-xs)', marginTop: 'var(--space-sm)' }}>
+            {form.data_types.filter(dt => !DATA_TYPES.some(d => d.value === dt)).map(item => (
+              <span key={item} className="badge badge-complete" style={{ cursor: 'pointer', padding: '4px 10px' }}
+                onClick={() => toggleArrayItem('data_types', item)}>
+                {item} ✕
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="form-group">
@@ -231,31 +287,36 @@ export default function CompanyForm({ onSubmit, loading, prefillData }) {
             <label key={r.value}
               className={`form-checkbox-label ${form.user_regions.includes(r.value) ? 'checked' : ''}`}>
               <input type="checkbox" checked={form.user_regions.includes(r.value)}
-                onChange={() => toggleArrayItem('user_regions', r.value)} />
+                onChange={() => {
+                  if (r.value === 'other') return;
+                  toggleArrayItem('user_regions', r.value);
+                }} />
               {r.label}
             </label>
           ))}
         </div>
+        {/* Custom region input */}
+        <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-sm)' }}>
+          <input type="text" className="form-input" value={customRegion}
+            onChange={(e) => setCustomRegion(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomItem('user_regions', customRegion, setCustomRegion))}
+            placeholder="Add custom region..." style={{ flex: 1, fontSize: '0.85rem' }} />
+          <button type="button" className="btn btn-secondary btn-sm"
+            onClick={() => addCustomItem('user_regions', customRegion, setCustomRegion)}>Add</button>
+        </div>
+        {form.user_regions.filter(r => !REGIONS.some(rg => rg.value === r)).length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-xs)', marginTop: 'var(--space-sm)' }}>
+            {form.user_regions.filter(r => !REGIONS.some(rg => rg.value === r)).map(item => (
+              <span key={item} className="badge badge-complete" style={{ cursor: 'pointer', padding: '4px 10px' }}
+                onClick={() => toggleArrayItem('user_regions', item)}>
+                {item} ✕
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* ── Sector Triggers ──────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)' }}>
-        <label className={`form-checkbox-label ${form.processes_payments ? 'checked' : ''}`}
-          style={{ padding: '12px 16px' }}>
-          <input type="checkbox" checked={form.processes_payments}
-            onChange={(e) => updateField('processes_payments', e.target.checked)} />
-          💳 Processes Payments
-        </label>
-
-        <label className={`form-checkbox-label ${form.stores_health_data ? 'checked' : ''}`}
-          style={{ padding: '12px 16px' }}>
-          <input type="checkbox" checked={form.stores_health_data}
-            onChange={(e) => updateField('stores_health_data', e.target.checked)} />
-          🏥 Stores Health Data
-        </label>
-      </div>
-
-      {/* ── Existing Compliance ──────────────────────────── */}
+      {/* ── Existing Compliance ──────────────────────── */}
       <div className="form-group" style={{ marginTop: 'var(--space-lg)' }}>
         <label className="form-label">Existing Compliance / Certifications</label>
         <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
@@ -277,14 +338,14 @@ export default function CompanyForm({ onSubmit, loading, prefillData }) {
         )}
       </div>
 
-      {/* ── Submit ───────────────────────────────────────── */}
+      {/* ── Submit ───────────────────────────────────── */}
       <button type="submit" className="btn btn-primary btn-lg"
         disabled={loading}
         style={{ width: '100%', marginTop: 'var(--space-xl)' }}>
         {loading ? (
           <><span className="spinner" /> Starting Analysis...</>
         ) : (
-          '🚀 Start Compliance Analysis'
+          'Start Compliance Analysis'
         )}
       </button>
     </form>

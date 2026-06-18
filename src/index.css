@@ -704,3 +704,81 @@ h4 { font-size: 1.1rem; }
     padding: var(--space-md);
   }
 }
+
+/* ── Theme Toggle Icons ────────────────────────────────────── */
+/* In dark mode (default): show sun icon, hide moon */
+.theme-icon-light { display: none; }
+.theme-icon-dark  { display: inline; }
+
+/* In light mode: show moon icon, hide sun */
+.light-theme .theme-icon-light { display: inline; }
+.light-theme .theme-icon-dark  { display: none; }
+
+/* ============================================================
+ * LIGHT THEME
+ * ============================================================
+ * Applied via .light-theme class on <html>.
+ * Overrides all CSS custom properties for a clean white UI.
+ * Risk/confidence colors remain the same for consistency.
+ * ============================================================ */
+.light-theme {
+  /* Background & Surface */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-surface: #f1f5f9;
+  --bg-elevated: #e2e8f0;
+
+  /* Borders */
+  --border-subtle: #e2e8f0;
+  --border-default: #cbd5e1;
+  --border-focus: #6366f1;
+
+  /* Text */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #94a3b8;
+  --text-inverse: #f8fafc;
+
+  /* Brand stays the same */
+  --primary-400: #6366f1;
+  --primary-500: #4f46e5;
+  --primary-600: #4338ca;
+
+  /* Shadows — lighter for white backgrounds */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.1);
+}
+
+/* Light theme glassmorphism override */
+.light-theme .card-glass {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Light theme auth page background */
+.light-theme .auth-page {
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(99, 102, 241, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.04) 0%, transparent 50%);
+}
+
+/* Light theme table hover */
+.light-theme .data-table tbody tr:hover {
+  background: rgba(99, 102, 241, 0.04);
+}
+
+/* Light theme scrollbar */
+.light-theme ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+
+.light-theme ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Light theme select dropdown arrow — darker for visibility */
+.light-theme .form-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23475569' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+}

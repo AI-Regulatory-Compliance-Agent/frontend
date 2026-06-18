@@ -1,17 +1,6 @@
 /**
- * Sidebar — Past analysis history with navigation.
- *
- * Shows:
- *   - App logo
- *   - "New Analysis" button
- *   - Past analyses list (sorted newest first):
- *       CompanyName — score — risk level — date
- *   - "Update Analysis" action per item (re-analysis)
- *   - Logout button at bottom
- *
- * When user clicks an analysis, it loads the dashboard for that run.
- * When user clicks "Update Analysis", it navigates to the form
- * pre-populated with that analysis's company profile.
+ * Sidebar — History + navigation + theme toggle.
+ * Minimal SVG logo replaces emoji. Dark/light theme toggle at bottom.
  */
 
 import { useAuth } from '../hooks/useAuth';
@@ -19,24 +8,45 @@ import { useAuth } from '../hooks/useAuth';
 export default function Sidebar({ history, activeId, onSelect, onNewAnalysis, onUpdateAnalysis }) {
   const { logout } = useAuth();
 
-  // Format date for display
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
   };
 
+  // Theme toggle
+  const toggleTheme = () => {
+    const root = document.documentElement;
+    const isLight = root.classList.toggle('light-theme');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  };
+
   return (
     <div className="sidebar">
-      {/* ── Header ─────────────────────────────────────── */}
+      {/* ── Header with SVG Logo ───────────────────── */}
       <div className="sidebar-header">
-        <div className="sidebar-logo">🛡️ ComplianceAI</div>
-        <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', marginTop: '2px' }}>
-          Regulatory Gap Analysis
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+          <svg width="28" height="28" viewBox="0 0 64 64" fill="none">
+            <rect width="64" height="64" rx="16" fill="url(#sidebar-logo-grad)" />
+            <path d="M32 16L44 24V40L32 48L20 40V24L32 16Z" stroke="white" strokeWidth="2.5" fill="none" />
+            <path d="M28 32L31 35L37 29" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            <defs>
+              <linearGradient id="sidebar-logo-grad" x1="0" y1="0" x2="64" y2="64">
+                <stop stopColor="#6366f1" />
+                <stop offset="1" stopColor="#8b5cf6" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <div>
+            <div className="sidebar-logo">ComplianceAI</div>
+            <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', marginTop: '-2px' }}>
+              Regulatory Gap Analysis
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* ── New Analysis Button ────────────────────────── */}
+      {/* ── New Analysis Button ────────────────────── */}
       <div style={{ padding: 'var(--space-md)' }}>
         <button className="btn btn-primary" onClick={onNewAnalysis}
           style={{ width: '100%' }}>
@@ -44,7 +54,7 @@ export default function Sidebar({ history, activeId, onSelect, onNewAnalysis, on
         </button>
       </div>
 
-      {/* ── History List ───────────────────────────────── */}
+      {/* ── History List ───────────────────────────── */}
       <div className="sidebar-content">
         <div className="sidebar-section-title">Analysis History</div>
 
@@ -63,10 +73,7 @@ export default function Sidebar({ history, activeId, onSelect, onNewAnalysis, on
             <div key={item.id}
               className={`sidebar-item ${activeId === item.id ? 'active' : ''}`}
               onClick={() => onSelect(item.id)}>
-              {/* Company name */}
               <div className="sidebar-item-name">{item.company_name}</div>
-
-              {/* Meta: score, risk, date */}
               <div className="sidebar-item-meta">
                 {item.status === 'complete' ? (
                   <>
@@ -86,13 +93,11 @@ export default function Sidebar({ history, activeId, onSelect, onNewAnalysis, on
                 )}
                 <span>{formatDate(item.created_at)}</span>
               </div>
-
-              {/* Update Analysis button */}
               {item.status === 'complete' && (
                 <button className="btn btn-secondary btn-sm"
                   onClick={(e) => { e.stopPropagation(); onUpdateAnalysis(item.id); }}
                   style={{ marginTop: 'var(--space-xs)', alignSelf: 'flex-start' }}>
-                  ↻ Update Analysis
+                  ↻ Update
                 </button>
               )}
             </div>
@@ -100,10 +105,16 @@ export default function Sidebar({ history, activeId, onSelect, onNewAnalysis, on
         )}
       </div>
 
-      {/* ── Footer / Logout ────────────────────────────── */}
-      <div className="sidebar-footer">
+      {/* ── Footer: Theme Toggle + Logout ──────────── */}
+      <div className="sidebar-footer" style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+        <button className="btn btn-secondary btn-sm" onClick={toggleTheme}
+          style={{ flex: '0 0 auto', padding: '6px 10px' }}
+          title="Toggle theme">
+          <span className="theme-icon-dark">☀️</span>
+          <span className="theme-icon-light">🌙</span>
+        </button>
         <button className="btn btn-secondary btn-sm" onClick={logout}
-          style={{ width: '100%' }}>
+          style={{ flex: 1 }}>
           Sign Out
         </button>
       </div>

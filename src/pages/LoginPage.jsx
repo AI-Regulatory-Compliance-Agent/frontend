@@ -47,7 +47,20 @@ export default function LoginPage() {
     <div className="auth-page">
       <div className="auth-card card-glass">
         {/* Logo / Title */}
-        <h1 className="auth-title">🛡️ ComplianceAI</h1>
+        <div style={{ textAlign: 'center', marginBottom: 'var(--space-md)' }}>
+          <svg width="48" height="48" viewBox="0 0 64 64" fill="none" style={{ margin: '0 auto' }}>
+            <rect width="64" height="64" rx="16" fill="url(#auth-logo-grad)" />
+            <path d="M32 16L44 24V40L32 48L20 40V24L32 16Z" stroke="white" strokeWidth="2.5" fill="none" />
+            <path d="M28 32L31 35L37 29" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            <defs>
+              <linearGradient id="auth-logo-grad" x1="0" y1="0" x2="64" y2="64">
+                <stop stopColor="#6366f1" />
+                <stop offset="1" stopColor="#8b5cf6" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <h1 className="auth-title">ComplianceAI</h1>
         <p className="auth-subtitle">AI-Powered Regulatory Gap Analysis</p>
 
         {/* Error Display */}

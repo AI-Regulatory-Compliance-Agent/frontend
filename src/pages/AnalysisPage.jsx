@@ -1,16 +1,12 @@
 /**
- * AnalysisPage — Where the user fills the form and watches agent progress.
+ * AnalysisPage — Form + progress view for compliance analysis.
  *
- * Two views:
- *   1. Form view — CompanyForm for input (default)
- *   2. Progress view — AgentProgress stepper during analysis
- *
- * Flow:
- *   User fills form → submit → POST /analyze → switch to progress view
- *   → SSE events update progress → on complete → navigate to dashboard
+ * CRITICAL FIX: Error state is now displayed to the user instead of
+ * being silently swallowed. The component manages its own error state
+ * and passes it down to CompanyForm for display.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CompanyForm from '../components/CompanyForm';
 import AgentProgress from '../components/AgentProgress';
@@ -21,28 +17,40 @@ export default function AnalysisPage({ prefillData, onComplete }) {
   const navigate = useNavigate();
   const { startAnalysis, loading } = useAnalysis();
   const [isAnalysing, setIsAnalysing] = useState(false);
+  const [formError, setFormError] = useState(null);
 
-  // SSE hook with completion callback
+  // Use ref for onComplete to avoid re-creating SSE hook
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+
+  // SSE hook with stable callbacks via refs
   const { progress, connect } = useSSE({
     onComplete: (analysisId) => {
-      // Analysis finished — navigate to dashboard with this result
-      if (onComplete) onComplete(analysisId);
+      if (onCompleteRef.current) onCompleteRef.current(analysisId);
       navigate(`/dashboard?analysis=${analysisId}`);
     },
     onError: (error) => {
       console.error('Analysis failed:', error);
+      setFormError(`Analysis pipeline failed: ${error}`);
       setIsAnalysing(false);
     },
   });
 
-  // Handle form submission
+  // Handle form submission — shows errors instead of swallowing them
   const handleSubmit = useCallback(async (formData) => {
+    setFormError(null);
     try {
       const result = await startAnalysis(formData);
-      setIsAnalysing(true);
-      // Connect to SSE stream with the returned session_id
-      connect(result.session_id);
+      if (result && result.session_id) {
+        setIsAnalysing(true);
+        connect(result.session_id);
+      } else {
+        setFormError('Unexpected response from server. Please try again.');
+      }
     } catch (err) {
+      // Show the actual error to the user
+      const msg = err.response?.data?.detail || err.message || 'Failed to start analysis. Is the backend running?';
+      setFormError(typeof msg === 'string' ? msg : JSON.stringify(msg));
       console.error('Failed to start analysis:', err);
     }
   }, [startAnalysis, connect]);
@@ -52,7 +60,7 @@ export default function AnalysisPage({ prefillData, onComplete }) {
       {/* Header */}
       <div style={{ marginBottom: 'var(--space-xl)' }}>
         <h1 style={{ marginBottom: 'var(--space-xs)' }}>
-          {prefillData ? '↻ Update Analysis' : '🚀 New Analysis'}
+          {prefillData ? 'Update Analysis' : 'New Analysis'}
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
           {prefillData
@@ -70,6 +78,7 @@ export default function AnalysisPage({ prefillData, onComplete }) {
             onSubmit={handleSubmit}
             loading={loading}
             prefillData={prefillData}
+            error={formError}
           />
         </div>
       )}
