@@ -153,20 +153,53 @@ export default function DashboardPage() {
 
         {view === 'results' && activeAnalysis && (
           <div>
-            <div style={{
-              display: 'flex', justifyContent: 'space-between',
-              alignItems: 'center', marginBottom: 'var(--space-xl)',
-            }}>
-              <div>
-                <h1 style={{ marginBottom: 'var(--space-xs)' }}>Analysis Results</h1>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                  {activeAnalysis.analysis_type?.toUpperCase()} analysis
-                  {activeAnalysis.confidence_level && ` · ${activeAnalysis.confidence_level.toUpperCase()} confidence`}
+            {/* Show error banner for failed analyses */}
+            {activeAnalysis.status === 'failed' ? (
+              <div className="animate-fade-in" style={{
+                display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+                minHeight: '40vh', textAlign: 'center',
+              }}>
+                <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)' }}>⚠️</div>
+                <h2 style={{ marginBottom: 'var(--space-sm)' }}>Analysis Failed</h2>
+                <p style={{ color: 'var(--text-secondary)', maxWidth: '500px', marginBottom: 'var(--space-lg)' }}>
+                  This analysis was unable to complete. This usually happens due to
+                  API rate limits or network issues. You can retry the analysis.
+                </p>
+                <button className="btn btn-primary" onClick={handleNewAnalysis}>
+                  Start New Analysis
+                </button>
+              </div>
+            ) : activeAnalysis.status === 'pending' || activeAnalysis.status === 'running' ? (
+              <div className="animate-fade-in" style={{
+                display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+                minHeight: '40vh', textAlign: 'center',
+              }}>
+                <div className="spinner" style={{ width: 40, height: 40, marginBottom: 'var(--space-lg)' }} />
+                <h2 style={{ marginBottom: 'var(--space-sm)' }}>Analysis In Progress</h2>
+                <p style={{ color: 'var(--text-secondary)' }}>
+                  This analysis is still running. Results will appear here when complete.
                 </p>
               </div>
-              <ReportDownload analysisId={activeId} />
-            </div>
-            <RiskDashboard analysis={activeAnalysis} />
+            ) : (
+              <>
+                <div style={{
+                  display: 'flex', justifyContent: 'space-between',
+                  alignItems: 'center', marginBottom: 'var(--space-xl)',
+                }}>
+                  <div>
+                    <h1 style={{ marginBottom: 'var(--space-xs)' }}>Analysis Results</h1>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                      {activeAnalysis.analysis_type?.toUpperCase()} analysis
+                      {activeAnalysis.confidence_level && ` · ${activeAnalysis.confidence_level.toUpperCase()} confidence`}
+                    </p>
+                  </div>
+                  <ReportDownload analysisId={activeId} />
+                </div>
+                <RiskDashboard analysis={activeAnalysis} />
+              </>
+            )}
           </div>
         )}
 
