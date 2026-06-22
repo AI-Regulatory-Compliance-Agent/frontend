@@ -4,12 +4,13 @@
  * Features:
  *   - Glassmorphism card design
  *   - Email/password validation
- *   - Error message display
+ *   - Clear error messages (email not found vs wrong password)
  *   - Link to register page
  *   - Auto-redirect to dashboard if already logged in
+ *   - Theme toggle available before login
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
@@ -22,11 +23,27 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Redirect if already authenticated
-  if (isAuthenticated) {
-    navigate('/dashboard', { replace: true });
-    return null;
-  }
+  // Redirect if already authenticated — useEffect avoids render-phase navigation
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Theme toggle
+  const toggleTheme = () => {
+    const root = document.documentElement;
+    const isLight = root.classList.toggle('light-theme');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  };
+
+  // Determine error type for icon display
+  const getErrorIcon = (errorMsg) => {
+    if (!errorMsg) return '';
+    if (errorMsg.toLowerCase().includes('email') || errorMsg.toLowerCase().includes('account')) return '✉️';
+    if (errorMsg.toLowerCase().includes('password')) return '🔒';
+    return '⚠️';
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,8 +60,22 @@ export default function LoginPage() {
     }
   };
 
+  // Don't render if already authenticated (wait for redirect)
+  if (isAuthenticated) return null;
+
   return (
     <div className="auth-page">
+      {/* Floating Theme Toggle */}
+      <button
+        className="auth-theme-toggle"
+        onClick={toggleTheme}
+        title="Toggle theme"
+        type="button"
+      >
+        <span className="theme-icon-dark">☀️</span>
+        <span className="theme-icon-light">🌙</span>
+      </button>
+
       <div className="auth-card card-glass">
         {/* Logo / Title */}
         <div style={{ textAlign: 'center', marginBottom: 'var(--space-md)' }}>
@@ -63,18 +94,11 @@ export default function LoginPage() {
         <h1 className="auth-title">ComplianceAI</h1>
         <p className="auth-subtitle">AI-Powered Regulatory Gap Analysis</p>
 
-        {/* Error Display */}
+        {/* Error Display — with specific icons */}
         {error && (
-          <div style={{
-            padding: '10px 14px',
-            background: 'rgba(255, 71, 87, 0.1)',
-            border: '1px solid rgba(255, 71, 87, 0.3)',
-            borderRadius: 'var(--radius-md)',
-            color: 'var(--risk-critical)',
-            fontSize: '0.85rem',
-            marginBottom: 'var(--space-md)',
-          }}>
-            {error}
+          <div className="auth-error-banner">
+            <span className="auth-error-icon">{getErrorIcon(error)}</span>
+            <span>{error}</span>
           </div>
         )}
 
@@ -115,9 +139,7 @@ export default function LoginPage() {
             style={{ width: '100%', marginTop: 'var(--space-md)' }}
           >
             {loading ? (
-              <>
-                <span className="spinner" /> Signing in...
-              </>
+              <><span className="spinner" /> Signing in...</>
             ) : (
               'Sign In'
             )}

@@ -1,8 +1,11 @@
 /**
  * RegisterPage — Account creation with the same glassmorphism design.
+ *
+ * Fixed: Race condition with isAuthenticated redirect moved to useEffect.
+ * Added: Theme toggle button on auth page.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
@@ -16,10 +19,19 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  if (isAuthenticated) {
-    navigate('/dashboard', { replace: true });
-    return null;
-  }
+  // Redirect if already authenticated — useEffect avoids render-phase navigation
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Theme toggle
+  const toggleTheme = () => {
+    const root = document.documentElement;
+    const isLight = root.classList.toggle('light-theme');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -46,8 +58,22 @@ export default function RegisterPage() {
     }
   };
 
+  // Don't render if already authenticated (wait for redirect)
+  if (isAuthenticated) return null;
+
   return (
     <div className="auth-page">
+      {/* Floating Theme Toggle */}
+      <button
+        className="auth-theme-toggle"
+        onClick={toggleTheme}
+        title="Toggle theme"
+        type="button"
+      >
+        <span className="theme-icon-dark">☀️</span>
+        <span className="theme-icon-light">🌙</span>
+      </button>
+
       <div className="auth-card card-glass">
         <div style={{ textAlign: 'center', marginBottom: 'var(--space-md)' }}>
           <svg width="48" height="48" viewBox="0 0 64 64" fill="none" style={{ margin: '0 auto' }}>
@@ -66,16 +92,9 @@ export default function RegisterPage() {
         <p className="auth-subtitle">Create your account</p>
 
         {error && (
-          <div style={{
-            padding: '10px 14px',
-            background: 'rgba(255, 71, 87, 0.1)',
-            border: '1px solid rgba(255, 71, 87, 0.3)',
-            borderRadius: 'var(--radius-md)',
-            color: 'var(--risk-critical)',
-            fontSize: '0.85rem',
-            marginBottom: 'var(--space-md)',
-          }}>
-            {error}
+          <div className="auth-error-banner">
+            <span className="auth-error-icon">⚠️</span>
+            <span>{error}</span>
           </div>
         )}
 
