@@ -1,4 +1,4 @@
-<![CDATA[# 🖥️ ComplianceAI — Frontend
+# 🖥️ ComplianceAI — Frontend
 
 > React + Vite dashboard for the AI Regulatory Compliance Agent. Provides a modern, responsive interface for submitting compliance analyses, tracking real-time agent progress via SSE, visualizing risk scores, and downloading PDF reports.
 
@@ -208,4 +208,3 @@ npm run preview  # Preview production build
 | **Styling** | Vanilla CSS with custom properties |
 | **Linting** | ESLint 10 |
 | **Container** | Node 20-alpine |
-]]>
