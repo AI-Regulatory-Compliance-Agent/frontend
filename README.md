@@ -1,4 +1,4 @@
-# 🖥️ ComplianceAI — Frontend
+# 🖥️ ComplianceAI - Frontend
 
 > React + Vite dashboard for the AI Regulatory Compliance Agent. Provides a modern, responsive interface for submitting compliance analyses, tracking real-time agent progress via SSE, visualizing risk scores, and downloading PDF reports.
 
