@@ -16,7 +16,7 @@ import { useAnalysis } from '../hooks/useAnalysis';
 export default function DashboardPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { getResult, getHistory, getHistoryDetail } = useAnalysis();
+  const { getResult, getHistory, getHistoryDetail, downloadReport } = useAnalysis();
 
   const [history, setHistory] = useState([]);
   const [activeAnalysis, setActiveAnalysis] = useState(null);
@@ -28,9 +28,11 @@ export default function DashboardPage() {
   const getResultRef = useRef(getResult);
   const getHistoryRef = useRef(getHistory);
   const getHistoryDetailRef = useRef(getHistoryDetail);
+  const downloadReportRef = useRef(downloadReport);
   getResultRef.current = getResult;
   getHistoryRef.current = getHistory;
   getHistoryDetailRef.current = getHistoryDetail;
+  downloadReportRef.current = downloadReport;
 
   // ── Load History (once on mount) ──────────────────────
   useEffect(() => {
@@ -101,10 +103,28 @@ export default function DashboardPage() {
 
   // ── On analysis complete ──────────────────────────────
   const handleAnalysisComplete = useCallback(async (analysisId) => {
-    // Reload history
+    // Reload history sidebar
     const items = await getHistoryRef.current();
     setHistory(items);
     setActiveId(analysisId);
+
+    // Fetch and display results immediately
+    try {
+      const result = await getResultRef.current(analysisId);
+      setActiveAnalysis(result);
+      setView('results');
+
+      // Auto-download PDF after a short delay so user sees results first
+      setTimeout(async () => {
+        try {
+          await downloadReportRef.current(analysisId);
+        } catch (err) {
+          console.error('Auto-download failed:', err);
+        }
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to load results:', err);
+    }
   }, []);
 
   return (
