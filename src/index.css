@@ -304,6 +304,17 @@ a:hover { color: var(--color-primary-500); }
   letter-spacing: 0.05em;
 }
 
+/* Required field red dot / asterisk */
+.form-required {
+  color: var(--color-risk-critical);   /* #ff4757 */
+  margin-left: 0.2em;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  vertical-align: middle;
+  user-select: none;
+}
+
 .form-hint {
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);

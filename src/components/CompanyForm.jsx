@@ -13,6 +13,11 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../api/client';
 
+// ── Required field indicator ──────────────────────────────────
+function Required() {
+  return <span className="form-required" aria-hidden="true">*</span>;
+}
+
 // ── Option lists ──────────────────────────────────────────────
 const INDUSTRIES = [
   { value: 'fintech',           label: 'Fintech' },
@@ -385,7 +390,7 @@ export default function CompanyForm({ onSubmit, loading, prefillData, error }) {
 
       <div className="form-group">
         <label className="form-label" htmlFor="company-name">
-          {isExternal ? 'Target Company Name' : 'Company Name'}
+          {isExternal ? 'Target Company Name' : 'Company Name'}<Required />
         </label>
         <input
           id="company-name"
@@ -444,7 +449,7 @@ export default function CompanyForm({ onSubmit, loading, prefillData, error }) {
       </div>
 
       <div className="form-group">
-        <label className="form-label" htmlFor="business-desc">Business Description</label>
+        <label className="form-label" htmlFor="business-desc">Business Description<Required /></label>
         <textarea
           id="business-desc"
           className="form-textarea"
