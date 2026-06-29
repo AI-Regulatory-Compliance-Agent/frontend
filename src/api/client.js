@@ -16,7 +16,7 @@ import axios from 'axios';
 // ── Base URL ────────────────────────────────────────────────
 // Points to the FastAPI backend. In Docker, this is the backend
 // service on port 8000. In development, it's localhost:8000.
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = 'http://20.244.40.144:8000';
 
 // ── Create Axios Instance ───────────────────────────────────
 const api = axios.create({
