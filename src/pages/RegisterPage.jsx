@@ -1,8 +1,16 @@
 /**
- * RegisterPage — Account creation with the same glassmorphism design.
+ * RegisterPage — Account creation with glassmorphism design.
  *
- * Fixed: Race condition with isAuthenticated redirect moved to useEffect.
- * Added: Theme toggle button on auth page.
+ * Semantic structure matches LoginPage exactly:
+ *   <main.auth>
+ *     <button.auth__theme-toggle>
+ *     <section.auth__card.card-glass>
+ *       <header.auth__logo>
+ *       <h1.auth__title>
+ *       <p.auth__subtitle>
+ *       <div.auth__error> (conditional)
+ *       <form.auth__form>
+ *       <footer.auth__footer>
  */
 
 import { useState, useEffect } from 'react';
@@ -19,17 +27,12 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Redirect if already authenticated — useEffect avoids render-phase navigation
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard', { replace: true });
-    }
+    if (isAuthenticated) navigate('/dashboard', { replace: true });
   }, [isAuthenticated, navigate]);
 
-  // Theme toggle
   const toggleTheme = () => {
-    const root = document.documentElement;
-    const isLight = root.classList.toggle('light-theme');
+    const isLight = document.documentElement.classList.toggle('light-theme');
     localStorage.setItem('theme', isLight ? 'light' : 'dark');
   };
 
@@ -41,7 +44,6 @@ export default function RegisterPage() {
       setError('Passwords do not match');
       return;
     }
-
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
       return;
@@ -58,25 +60,26 @@ export default function RegisterPage() {
     }
   };
 
-  // Don't render if already authenticated (wait for redirect)
   if (isAuthenticated) return null;
 
   return (
-    <div className="auth-page">
-      {/* Floating Theme Toggle */}
+    <main className="auth animate-fade-in">
+      {/* Floating theme toggle */}
       <button
-        className="auth-theme-toggle"
+        className="auth__theme-toggle"
         onClick={toggleTheme}
-        title="Toggle theme"
+        title="Toggle colour theme"
         type="button"
+        aria-label="Toggle colour theme"
       >
-        <span className="theme-icon-dark">☀️</span>
-        <span className="theme-icon-light">🌙</span>
+        <span className="theme-icon-dark" aria-hidden>☀️</span>
+        <span className="theme-icon-light" aria-hidden>🌙</span>
       </button>
 
-      <div className="auth-card card-glass">
-        <div style={{ textAlign: 'center', marginBottom: 'var(--space-md)' }}>
-          <svg width="48" height="48" viewBox="0 0 64 64" fill="none" style={{ margin: '0 auto' }}>
+      <section className="auth__card card-glass" aria-label="Create account">
+        {/* Logo */}
+        <header className="auth__logo">
+          <svg width="48" height="48" viewBox="0 0 64 64" fill="none" aria-hidden="true">
             <rect width="64" height="64" rx="16" fill="url(#reg-logo-grad)" />
             <path d="M32 16L44 24V40L32 48L20 40V24L32 16Z" stroke="white" strokeWidth="2.5" fill="none" />
             <path d="M28 32L31 35L37 29" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -87,18 +90,21 @@ export default function RegisterPage() {
               </linearGradient>
             </defs>
           </svg>
-        </div>
-        <h1 className="auth-title">ComplianceAI</h1>
-        <p className="auth-subtitle">Create your account</p>
+        </header>
 
+        <h1 className="auth__title">ComplianceAI</h1>
+        <p className="auth__subtitle">Create your account</p>
+
+        {/* Error display */}
         {error && (
-          <div className="auth-error-banner">
-            <span className="auth-error-icon">⚠️</span>
+          <div className="auth__error" role="alert">
+            <span aria-hidden="true">⚠️</span>
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        {/* Register form */}
+        <form className="auth__form" onSubmit={handleSubmit} noValidate>
           <div className="form-group">
             <label className="form-label" htmlFor="register-email">Email</label>
             <input
@@ -110,6 +116,7 @@ export default function RegisterPage() {
               placeholder="you@company.com"
               required
               autoFocus
+              autoComplete="email"
             />
           </div>
 
@@ -124,6 +131,7 @@ export default function RegisterPage() {
               placeholder="Minimum 6 characters"
               required
               minLength={6}
+              autoComplete="new-password"
             />
           </div>
 
@@ -137,28 +145,25 @@ export default function RegisterPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Repeat your password"
               required
+              autoComplete="new-password"
             />
           </div>
 
           <button
             type="submit"
-            className="btn btn-primary btn-lg"
+            className="btn btn-primary btn--lg"
             disabled={loading}
-            style={{ width: '100%', marginTop: 'var(--space-md)' }}
+            style={{ width: '100%' }}
           >
-            {loading ? (
-              <><span className="spinner" /> Creating account...</>
-            ) : (
-              'Create Account'
-            )}
+            {loading ? <><span className="spinner" aria-hidden /> Creating account...</> : 'Create Account'}
           </button>
         </form>
 
-        <p className="auth-link">
+        <footer className="auth__footer">
           Already have an account?{' '}
           <Link to="/login">Sign in</Link>
-        </p>
-      </div>
-    </div>
+        </footer>
+      </section>
+    </main>
   );
 }

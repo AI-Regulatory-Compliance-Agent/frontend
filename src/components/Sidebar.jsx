@@ -1,31 +1,55 @@
 /**
- * Sidebar — History + navigation + theme toggle.
- * Minimal SVG logo replaces emoji. Dark/light theme toggle at bottom.
+ * Sidebar — App navigation, history list, theme toggle, logout.
+ *
+ * Semantic structure:
+ *   <aside.sidebar#sidebar>
+ *     <header.sidebar__header>
+ *     <div.sidebar__new-btn-wrapper>
+ *     <nav.sidebar__nav>
+ *       <h2.sidebar__section-label>
+ *       <div.sidebar__empty> OR list of sidebar__nav-item
+ *     </nav>
+ *     <footer.sidebar__footer>
+ *
+ * Mobile: sidebar receives isOpen prop.
+ * CSS adds transform: translateX(-100%) when not open.
  */
 
 import { useAuth } from '../hooks/useAuth';
 
-export default function Sidebar({ history, activeId, onSelect, onNewAnalysis, onUpdateAnalysis }) {
+export default function Sidebar({
+  id,
+  isOpen,
+  history,
+  activeId,
+  onSelect,
+  onNewAnalysis,
+  onUpdateAnalysis,
+}) {
   const { logout } = useAuth();
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+    return new Date(dateStr).toLocaleDateString('en-IN', {
+      month: 'short',
+      day: 'numeric',
+    });
   };
 
-  // Theme toggle
   const toggleTheme = () => {
-    const root = document.documentElement;
-    const isLight = root.classList.toggle('light-theme');
+    const isLight = document.documentElement.classList.toggle('light-theme');
     localStorage.setItem('theme', isLight ? 'light' : 'dark');
   };
 
   return (
-    <div className="sidebar">
-      {/* ── Header with SVG Logo ───────────────────── */}
-      <div className="sidebar-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+    <aside
+      id={id}
+      className={`sidebar${isOpen ? ' is-open' : ''}`}
+      aria-label="Application navigation"
+    >
+      {/* ── Brand header ────────────────────────── */}
+      <header className="sidebar__header">
+        <div className="sidebar__logo-mark" aria-hidden="true">
           <svg width="28" height="28" viewBox="0 0 64 64" fill="none">
             <rect width="64" height="64" rx="16" fill="url(#sidebar-logo-grad)" />
             <path d="M32 16L44 24V40L32 48L20 40V24L32 16Z" stroke="white" strokeWidth="2.5" fill="none" />
@@ -37,44 +61,47 @@ export default function Sidebar({ history, activeId, onSelect, onNewAnalysis, on
               </linearGradient>
             </defs>
           </svg>
-          <div>
-            <div className="sidebar-logo">ComplianceAI</div>
-            <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', marginTop: '-2px' }}>
-              Regulatory Gap Analysis
-            </div>
-          </div>
         </div>
-      </div>
+        <div>
+          <div className="sidebar__logo-text">ComplianceAI</div>
+          <div className="sidebar__tagline">Regulatory Gap Analysis</div>
+        </div>
+      </header>
 
-      {/* ── New Analysis Button ────────────────────── */}
-      <div style={{ padding: 'var(--space-md)' }}>
-        <button className="btn btn-primary" onClick={onNewAnalysis}
-          style={{ width: '100%' }}>
+      {/* ── New Analysis CTA ─────────────────────── */}
+      <div className="sidebar__new-btn-wrapper">
+        <button
+          className="btn btn-primary"
+          onClick={onNewAnalysis}
+          style={{ width: '100%' }}
+          aria-label="Start a new analysis"
+        >
           ＋ New Analysis
         </button>
       </div>
 
-      {/* ── History List ───────────────────────────── */}
-      <div className="sidebar-content">
-        <div className="sidebar-section-title">Analysis History</div>
+      {/* ── History list ─────────────────────────── */}
+      <nav className="sidebar__nav" aria-label="Analysis history">
+        <h2 className="sidebar__section-label">Analysis History</h2>
 
         {history.length === 0 ? (
-          <div style={{
-            padding: 'var(--space-lg)',
-            textAlign: 'center',
-            color: 'var(--text-tertiary)',
-            fontSize: '0.8rem',
-          }}>
-            No analyses yet.
-            <br />Start your first one above.
-          </div>
+          <p className="sidebar__empty">
+            No analyses yet.<br />Start your first one above.
+          </p>
         ) : (
           history.map((item) => (
-            <div key={item.id}
-              className={`sidebar-item ${activeId === item.id ? 'active' : ''}`}
-              onClick={() => onSelect(item.id)}>
-              <div className="sidebar-item-name">{item.company_name}</div>
-              <div className="sidebar-item-meta">
+            <div
+              key={item.id}
+              className={`sidebar__nav-item${activeId === item.id ? ' sidebar__nav-item--active' : ''}`}
+              onClick={() => onSelect(item.id)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && onSelect(item.id)}
+              aria-current={activeId === item.id ? 'page' : undefined}
+              aria-label={`View analysis: ${item.company_name}`}
+            >
+              <div className="sidebar__item-name">{item.company_name}</div>
+              <div className="sidebar__item-meta">
                 {item.status === 'complete' ? (
                   <>
                     <span className={`badge badge-${item.overall_risk_level?.toLowerCase() || 'pending'}`}>
@@ -87,37 +114,45 @@ export default function Sidebar({ history, activeId, onSelect, onNewAnalysis, on
                     )}
                   </>
                 ) : (
-                  <span className={`badge badge-${item.status}`}>
-                    {item.status}
-                  </span>
+                  <span className={`badge badge-${item.status}`}>{item.status}</span>
                 )}
-                <span>{formatDate(item.created_at)}</span>
+                <time dateTime={item.created_at}>{formatDate(item.created_at)}</time>
               </div>
               {item.status === 'complete' && (
-                <button className="btn btn-secondary btn-sm"
+                <button
+                  className="btn btn-secondary btn--sm"
                   onClick={(e) => { e.stopPropagation(); onUpdateAnalysis(item.id); }}
-                  style={{ marginTop: 'var(--space-xs)', alignSelf: 'flex-start' }}>
+                  aria-label={`Re-run analysis for ${item.company_name}`}
+                  style={{ marginTop: 'var(--space-1)', alignSelf: 'flex-start' }}
+                >
                   ↻ Update
                 </button>
               )}
             </div>
           ))
         )}
-      </div>
+      </nav>
 
-      {/* ── Footer: Theme Toggle + Logout ──────────── */}
-      <div className="sidebar-footer" style={{ display: 'flex', gap: 'var(--space-sm)' }}>
-        <button className="btn btn-secondary btn-sm" onClick={toggleTheme}
-          style={{ flex: '0 0 auto', padding: '6px 10px' }}
-          title="Toggle theme">
-          <span className="theme-icon-dark">☀️</span>
-          <span className="theme-icon-light">🌙</span>
+      {/* ── Footer: theme + logout ───────────────── */}
+      <footer className="sidebar__footer">
+        <button
+          className="btn btn-secondary btn--sm"
+          onClick={toggleTheme}
+          title="Toggle colour theme"
+          aria-label="Toggle colour theme"
+          style={{ flexShrink: 0 }}
+        >
+          <span className="theme-icon-dark" aria-hidden>☀️</span>
+          <span className="theme-icon-light" aria-hidden>🌙</span>
         </button>
-        <button className="btn btn-secondary btn-sm" onClick={logout}
-          style={{ flex: 1 }}>
+        <button
+          className="btn btn-secondary btn--sm"
+          onClick={logout}
+          style={{ flex: 1 }}
+        >
           Sign Out
         </button>
-      </div>
-    </div>
+      </footer>
+    </aside>
   );
 }

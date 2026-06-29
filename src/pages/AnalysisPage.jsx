@@ -1,9 +1,12 @@
 /**
  * AnalysisPage — Form + progress view for compliance analysis.
  *
- * CRITICAL FIX: Error state is now displayed to the user instead of
- * being silently swallowed. The component manages its own error state
- * and passes it down to CompanyForm for display.
+ * Semantic structure:
+ *   <main.analysis-page>
+ *     <header.page-header>
+ *     <div.card> (form, when not analysing)
+ *       <CompanyForm>
+ *     <AgentProgress> (when analysing)
  */
 
 import { useState, useCallback, useRef } from 'react';
@@ -16,14 +19,14 @@ import { useSSE } from '../hooks/useSSE';
 export default function AnalysisPage({ prefillData, onComplete }) {
   const navigate = useNavigate();
   const { startAnalysis, loading } = useAnalysis();
+
   const [isAnalysing, setIsAnalysing] = useState(false);
   const [formError, setFormError] = useState(null);
+  const [analysisMode, setAnalysisMode] = useState('self');
 
-  // Use ref for onComplete to avoid re-creating SSE hook
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
 
-  // SSE hook with stable callbacks via refs
   const { progress, connect } = useSSE({
     onComplete: (analysisId) => {
       if (onCompleteRef.current) onCompleteRef.current(analysisId);
@@ -36,42 +39,40 @@ export default function AnalysisPage({ prefillData, onComplete }) {
     },
   });
 
-  // Handle form submission — shows errors instead of swallowing them
   const handleSubmit = useCallback(async (formData) => {
     setFormError(null);
+    setAnalysisMode(formData.analysis_mode || 'self');
     try {
       const result = await startAnalysis(formData);
-      if (result && result.session_id) {
+      if (result?.session_id) {
         setIsAnalysing(true);
         connect(result.session_id);
       } else {
-        setFormError('Unexpected response from server. Please try again.');
+        setFormError('Unexpected server response. Please try again.');
       }
     } catch (err) {
-      // Show the actual error to the user
       const msg = err.response?.data?.detail || err.message || 'Failed to start analysis. Is the backend running?';
       setFormError(typeof msg === 'string' ? msg : JSON.stringify(msg));
-      console.error('Failed to start analysis:', err);
     }
   }, [startAnalysis, connect]);
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ marginBottom: 'var(--space-xl)' }}>
-        <h1 style={{ marginBottom: 'var(--space-xs)' }}>
-          {prefillData ? 'Update Analysis' : 'New Analysis'}
-        </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-          {prefillData
-            ? 'Update the company profile with new information and re-run the analysis.'
-            : 'Describe a company and our AI agents will identify compliance gaps.'}
-        </p>
-      </div>
+    <main className="analysis-page">
+      {/* ── Page header ─────────────────────────── */}
+      <header className="page-header">
+        <div className="page-header__titles">
+          <h1>{prefillData ? 'Update Analysis' : 'New Analysis'}</h1>
+          <p>
+            {prefillData
+              ? 'Update the company profile and re-run the analysis.'
+              : 'Describe a company and our AI agents will identify compliance gaps.'}
+          </p>
+        </div>
+      </header>
 
-      {/* Show progress or form */}
+      {/* ── Form / Progress ──────────────────────── */}
       {isAnalysing ? (
-        <AgentProgress progress={progress} />
+        <AgentProgress progress={progress} analysisMode={analysisMode} />
       ) : (
         <div className="card">
           <CompanyForm
@@ -82,6 +83,6 @@ export default function AnalysisPage({ prefillData, onComplete }) {
           />
         </div>
       )}
-    </div>
+    </main>
   );
 }
