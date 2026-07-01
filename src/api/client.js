@@ -14,9 +14,9 @@
 import axios from 'axios';
 
 // ── Base URL ────────────────────────────────────────────────
-// Points to the FastAPI backend. In Docker, this is the backend
-// service on port 8000. In development, it's localhost:8000.
-const API_BASE_URL = 'http://localhost:8000';
+// Points to the FastAPI backend. Reads from VITE_API_URL env var in production,
+// falls back to localhost:8000 for local development.
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // ── Create Axios Instance ───────────────────────────────────
 const api = axios.create({

@@ -140,21 +140,22 @@ export function useSSE({ onComplete, onError } = {}) {
           // ── Progress Update ────────────────────────────────
           // An agent is either "running" or just "complete"d
           const stepIndex = AGENT_ORDER.indexOf(agent);
-          const completed = AGENT_ORDER.slice(0, stepIndex);
 
-          // If an agent completed, add it to the completed list
-          if (status === 'complete' && agent) {
-            completed.push(agent);
-          }
-
-          setProgress(prev => ({
-            ...prev,
-            currentAgent: agent,
-            currentAgentLabel: AGENT_LABELS[agent] || agent,
-            status: 'running',
-            completedAgents: completed,
-            currentStep: stepIndex >= 0 ? stepIndex : prev.currentStep,
-          }));
+          setProgress(prev => {
+            const alreadyCompleted = prev.completedAgents || [];
+            const completedAgents =
+              status === 'complete' && agent && !alreadyCompleted.includes(agent)
+                ? [...alreadyCompleted, agent]
+                : alreadyCompleted;
+            return {
+              ...prev,
+              currentAgent: agent,
+              currentAgentLabel: AGENT_LABELS[agent] || agent,
+              status: 'running',
+              completedAgents,
+              currentStep: stepIndex >= 0 ? stepIndex : prev.currentStep,
+            };
+          });
         }
       } catch (err) {
         console.error('Failed to parse SSE message:', err);

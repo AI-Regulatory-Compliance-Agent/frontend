@@ -28,7 +28,7 @@ import { useAnalysis } from '../hooks/useAnalysis';
 export default function DashboardPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { getResult, getHistory, getHistoryDetail, downloadReport } = useAnalysis();
+  const { getResult, getHistory, getHistoryDetail } = useAnalysis();
 
   const [history, setHistory] = useState([]);
   const [activeAnalysis, setActiveAnalysis] = useState(null);
@@ -41,11 +41,9 @@ export default function DashboardPage() {
   const getResultRef = useRef(getResult);
   const getHistoryRef = useRef(getHistory);
   const getHistoryDetailRef = useRef(getHistoryDetail);
-  const downloadReportRef = useRef(downloadReport);
   getResultRef.current = getResult;
   getHistoryRef.current = getHistory;
   getHistoryDetailRef.current = getHistoryDetail;
-  downloadReportRef.current = downloadReport;
 
   // Load history once on mount
   useEffect(() => {
@@ -117,10 +115,6 @@ export default function DashboardPage() {
       const result = await getResultRef.current(analysisId);
       setActiveAnalysis(result);
       setView('results');
-      setTimeout(async () => {
-        try { await downloadReportRef.current(analysisId); }
-        catch (err) { console.error('Auto-download failed:', err); }
-      }, 2000);
     } catch (err) {
       console.error('Failed to load results:', err);
     }
